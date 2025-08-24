@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FireMeBot — Get fired with flair</title>
+  <meta name="description" content="Enter your job title. Get a satirical 'you're fired' speech.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/global.css">
+</head>
+<body>
+  <header class="site-head">
+    <div class="wrap">
+      <div class="brand">🔥 FireMeBot</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero card">
+      <h1>Get fired with flair.</h1>
+      <p class="muted">Type your job title and I’ll draft a spicy goodbye speech. Satire only. Don’t be awful.</p>
+
+      <form id="roastForm" class="form">
+        <label for="titleInput" class="sr-only">Your job title</label>
+        <input id="titleInput" class="input" type="text" name="title" placeholder="e.g., Senior Synergy Evangelist" required maxlength="140" autofocus>
+        <button id="fireBtn" class="btn">Fire me 🔥</button>
+      </form>
+
+      <div id="status" class="status" aria-live="polite"></div>
+
+      <section id="resultCard" class="result card hidden">
+        <div class="result-head">
+          <h2>Roast</h2>
+          <button id="copyBtn" class="copy-btn" title="Copy to clipboard">Copy</button>
+        </div>
+        <pre id="resultText" class="result-text"></pre>
+        <div class="again">
+          <button id="againBtn" class="btn btn-ghost">Try another</button>
+        </div>
+      </section>
+
+      <p class="fine-print">By using this site you agree this is <strong>satire</strong> and not for harassment. Keep it playful.</p>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <div class="wrap">
+      <small>© <span id="year"></span> FireMeBot • Made for fun</small>
+    </div>
+  </footer>
+
+  <script src="assets/app.js" defer></script>
+</body>
+</html>
