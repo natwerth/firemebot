@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FireMeBot — Get fired with flair</title>
-  <meta name="description" content="Enter your job title. Get a satirical 'you're fired' speech.">
+  <meta name="description" content="Enter your job title. Get a satirical automation risk memo.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/global.css">
 </head>
@@ -18,29 +18,64 @@
   <main class="wrap">
     <section class="hero card">
       <h1>Get fired with flair.</h1>
-      <p class="muted">Type your job title and I’ll draft a spicy goodbye speech. Satire only. Don’t be awful.</p>
+      <p class="muted">Type your job title and I’ll draft a cold corporate risk memo. Satire only.</p>
 
-      <form id="roastForm" class="form">
+      <form id="roastForm" class="form" autocomplete="off">
         <label for="titleInput" class="sr-only">Your job title</label>
         <input id="titleInput" class="input" type="text" name="title" placeholder="e.g., Senior Synergy Evangelist" required maxlength="140" autofocus>
         <button id="fireBtn" class="btn">Fire me 🔥</button>
       </form>
 
       <div id="status" class="status" aria-live="polite"></div>
-
-      <section id="resultCard" class="result card hidden">
-        <div class="result-head">
-          <h2>Roast</h2>
-          <button id="copyBtn" class="copy-btn" title="Copy to clipboard">Copy</button>
-        </div>
-        <pre id="resultText" class="result-text"></pre>
-        <div class="again">
-          <button id="againBtn" class="btn btn-ghost">Try another</button>
-        </div>
-      </section>
-
-      <p class="fine-print">By using this site you agree this is <strong>satire</strong> and not for harassment. Keep it playful.</p>
     </section>
+
+    <section id="resultCard" class="result card hidden" aria-live="polite">
+      <div class="result-head">
+        <h2 id="outTitle">—</h2>
+        <div class="score-wrap">
+          <div class="score-label">AI replacement risk</div>
+          <div class="score-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="scoreFill" class="score-fill" style="width:0%"></div>
+          </div>
+          <div id="scoreValue" class="score-value">0</div>
+        </div>
+      </div>
+
+      <div class="result-grid">
+        <div class="result-section">
+          <h3>Memo</h3>
+          <p id="outBody" class="result-text">—</p>
+          <button class="copy-btn" data-copy="body">Copy memo</button>
+        </div>
+
+        <div class="result-section">
+          <h3>Social Post</h3>
+          <p id="outPost" class="result-text">—</p>
+          <button class="copy-btn" data-copy="post">Copy post</button>
+        </div>
+
+        <div class="result-section">
+          <h3>Lower-risk pivots</h3>
+          <ul id="outTips" class="tips"></ul>
+          <button class="copy-btn" data-copy="tips">Copy tips</button>
+        </div>
+      </div>
+
+      <details class="advanced">
+        <summary>Advanced</summary>
+        <div class="adv-grid">
+          <label class="adv-item">
+            API endpoint
+            <input id="apiInput" class="input small" type="text" placeholder="/api/roast">
+          </label>
+          <button id="againBtn" class="btn ghost">Try another</button>
+          <button id="copyJsonBtn" class="btn ghost">Copy raw JSON</button>
+        </div>
+        <pre id="rawJson" class="result-text small" aria-label="Raw JSON"></pre>
+      </details>
+    </section>
+
+    <p class="fine-print">This is <strong>satire</strong>. Don’t use it to harass real people. Keep it playful.</p>
   </main>
 
   <footer class="site-foot">
