@@ -1,0 +1,5 @@
+// Configure your Worker endpoint here or via the UI button.
+// Example: https://firemebot-worker.nat-1fa.workers.dev/analyze
+window.FireMeBot = {
+  WORKER_URL: "https://firemebot-api.nat-1fa.workers.dev/api/roast"
+};
