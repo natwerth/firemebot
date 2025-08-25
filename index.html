@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FireMeBot</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <h1>FireMeBot</h1>
+    <div class="env">
+      <span id="envStatus">worker: <em>unset</em></span>
+      <button id="editEndpointBtn" class="btn ghost" title="Set Worker URL">Set endpoint</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Search / input -->
+    <section class="search-section card">
+      <label for="roleInput" class="label">Job title or prompt</label>
+      <div class="search-row">
+        <input id="roleInput" class="input" type="text" placeholder="e.g., Senior Synergy Evangelist" autocomplete="off"/>
+        <button id="goBtn" class="btn primary">Generate</button>
+      </div>
+      <div class="hints">
+        <span>↵ Enter to run</span>
+        <span>⌘/Ctrl + K to focus</span>
+      </div>
+    </section>
+
+    <!-- Status / errors -->
+    <section id="statusBar" class="status hidden"></section>
+
+    <!-- Results -->
+    <section id="results" class="results-grid">
+      <!-- Cards injected here -->
+    </section>
+
+    <!-- History -->
+    <section class="history card">
+      <div class="history-head">
+        <h2>History</h2>
+        <button id="clearHistory" class="btn ghost">Clear</button>
+      </div>
+      <ul id="historyList" class="history-list"></ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Built with ✦ doom, ✦ dread, and ✦ JavaScript.</p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
