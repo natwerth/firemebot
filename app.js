@@ -92,20 +92,29 @@
     setStatus('Thinking…', 'info');
 
     try {
-      const resp = await fetch(WORKER_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ title: query }), // ← canonical contract
-      });
+      const blocks = [];
 
-      // Surface non-2xx with body snippet
-      if (!resp.ok) {
-        const text = await resp.text().catch(() => '');
-        throw new Error(`Worker ${resp.status} ${resp.statusText}${text ? ` — ${text}` : ''}`);
+      // Roast block (string or object pretty-print)
+      if (typeof normalized.roast !== 'undefined' && normalized.roast !== null) {
+        const roastText = typeof normalized.roast === 'string'
+          ? normalized.roast
+          : JSON.stringify(normalized.roast, null, 2);
+        blocks.push(createCard('Roast', roastText, { pre: typeof normalized.roast !== 'string' }));
       }
+      
+      // Meta
+      const metaLines = [];
+      if (normalized.title)     metaLines.push(`<div><b>Input:</b> ${escapeHtml(normalized.title)}</div>`);
+      if (normalized.riskTier)  metaLines.push(`<div><b>Risk tier:</b> ${escapeHtml(String(normalized.riskTier))}</div>`);
+      if (normalized.rationale) metaLines.push(`<div><b>Rationale:</b> ${escapeHtml(normalized.rationale)}</div>`);
+      if (normalized.timestamp) metaLines.push(`<div><b>Time:</b> ${escapeHtml(String(normalized.timestamp))}</div>`);
+      if (metaLines.length) blocks.push(createCard('Details', metaLines.join('')));
+      
+      // If nothing else, show the whole payload so you’re never blind
+      if (!blocks.length) {
+        blocks.push(createCard('Raw response', JSON.stringify(normalized.raw, null, 2), { pre: true }));
+      }
+
 
       const data = await resp.json();
 
