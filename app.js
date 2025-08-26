@@ -295,7 +295,7 @@
         }
 
         const base = (obj && typeof obj === 'object' && obj.roast) ? obj.roast : obj;
-        const data = normalizePayload(base);
+        const data = normalizePayload((obj && obj.roast) ? obj.roast : obj);
 
         if (!data) {
           throw Object.assign(new Error('Response JSON was not an object'), { details: JSON.stringify(obj).slice(0, 2000) });
