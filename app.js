@@ -255,13 +255,13 @@
       cache: 'no-store',
     });
 
-    const text = await res.text();
     if (!res.ok){
-      const err = new Error('HTTP ' + res.status + ' ' + res.statusText);
-      err.details = text;
+      const errText = await res.text();
+      throw new Error('HTTP ' + res.status + ' ' + res.statusText);
       throw err;
     }
-    return text;
+    //parse JSON instead of text
+    return await res.json();
   }
 
   function showSkeletons(){ show(els.skeletonWrap); hide(els.errorCard); }
