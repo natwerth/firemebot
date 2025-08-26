@@ -1,112 +1,39 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FireMeBot</title>
-  <link rel="stylesheet" href="styles.css"/>
-</head>
-<body>
-  <header class="site-header">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FireMeBot — Minimal</title>
+  </head>
+  <body>
     <h1>FireMeBot</h1>
-    <div class="env">
-      <span id="envStatus">worker: <em>unset</em></span>
-      <button id="editEndpointBtn" class="btn ghost" title="Set Worker URL">Set endpoint</button>
+    <p>Type a job title and get a risk readout. No fluff, no config, just works.</p>
+
+    <form id="job-form">
+      <input id="job-input" type="text" placeholder="e.g., Barista" autofocus />
+      <button id="submit-btn" type="submit">Analyze</button>
+      <span id="status"></span>
+    </form>
+
+    <hr/>
+
+    <h2 id="out-title"></h2>
+    <div>
+      <strong>Score:</strong> <span id="out-score">–</span>
     </div>
-  </header>
+    <h3>Assessment</h3>
+    <p id="out-body"></p>
+    <h3>Post</h3>
+    <p id="out-post"></p>
+    <h3>Tips</h3>
+    <ul id="out-tips"></ul>
 
-  <main class="container">
-    <section class="query">
-      <div class="row">
-        <input id="roleInput" type="text" placeholder="Enter a job title (e.g., Barista)"/>
-        <button id="goBtn" class="btn">Analyze</button>
-      </div>
-      <div id="statusBar" class="status">Ready.</div>
-    </section>
+    <details id="errorCard" style="display:none;">
+      <summary>Error</summary>
+      <pre id="errorMsg"></pre>
+      <pre id="errorDetails"></pre>
+    </details>
 
-    <section id="results" class="results">
-      <!-- Gauge -->
-      <div id="gaugeCard" class="card gauge-card hidden" aria-live="polite">
-        <div class="gauge-wrap">
-          <svg id="riskGauge" viewBox="0 0 120 120" role="img" aria-label="Automation Risk">
-            <circle class="gauge-track" cx="60" cy="60" r="52"/>
-            <circle class="gauge-value" cx="60" cy="60" r="52" stroke-dasharray="0 327"/>
-          </svg>
-          <div class="gauge-center">
-            <div id="gaugeValue" class="gauge-value-text">--</div>
-            <div class="gauge-caption">Automation Risk</div>
-            <div id="gaugeBucket" class="gauge-bucket">—</div>
-            <div id="gaugeUpdated" class="gauge-updated">—</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Skeletons -->
-      <div id="skeletonWrap" class="skeleton-wrap hidden">
-        <div class="card skeleton h160"></div>
-        <div class="card skeleton h120"></div>
-        <div class="card skeleton h80"></div>
-        <div class="card skeleton h80"></div>
-      </div>
-
-      <!-- Error -->
-      <div id="errorCard" class="card error hidden">
-        <div class="card-head">
-          <h3>Error</h3>
-          <button id="retryBtn" class="btn ghost sm">Try again</button>
-        </div>
-        <p id="errorMsg" class="mono small"></p>
-        <details class="kv">
-          <summary>Details</summary>
-          <pre id="errorDetails" class="mono"></pre>
-        </details>
-      </div>
-
-      <!-- Body / Assessment -->
-      <div id="cardAssessment" class="card hidden">
-        <div class="card-head">
-          <h3>Assessment</h3>
-          <button class="btn ghost sm copy" data-copy="assessment">Copy</button>
-        </div>
-        <div id="assessmentContent" class="bigtext"></div>
-      </div>
-
-      <!-- Post -->
-      <div id="cardPost" class="card hidden">
-        <div class="card-head">
-          <h3>Social Post</h3>
-          <button class="btn ghost sm copy" data-copy="post">Copy</button>
-        </div>
-        <div id="postContent" class="bigtext"></div>
-      </div>
-
-      <!-- Tips -->
-      <div id="cardTips" class="card hidden">
-        <div class="card-head">
-          <h3>Pivot Ideas</h3>
-          <div class="row">
-            <button class="btn ghost sm copy" data-copy="tips-list">Copy list</button>
-            <button class="btn ghost sm copy" data-copy="tips-bullets">Copy as bullets</button>
-          </div>
-        </div>
-        <div id="tipsWrap" class="chips"></div>
-      </div>
-    </section>
-
-    <section class="history">
-      <div class="history-head">
-        <h2>History</h2>
-        <button id="clearHistory" class="btn ghost">Clear</button>
-      </div>
-      <ul id="historyList" class="history-list"></ul>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <p>Built with ✦ doom, ✦ dread, and ✦ JavaScript.</p>
-  </footer>
-
-  <script src="config.js"></script>
-  <script src="app.js"></script>
-</body>
+    <script src="app.js"></script>
+  </body>
 </html>
