@@ -248,20 +248,23 @@
     if (!url) throw new Error('Worker URL is not set. Click “Set endpoint”.');
 
     const payload = { title: role };
-    const res = await fetch(url, {
-      method:'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify(payload),
-      cache: 'no-store',
-    });
+    return (async () => {
+      const res = await fetch(url, {
+        method:'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(payload),
+        cache: 'no-store',
+      });
 
-    if (!res.ok){
-      const errText = await res.text();
-      throw new Error('HTTP ' + res.status + ' ' + res.statusText);
-      throw err;
-    }
-    //parse JSON instead of text
-    return await res.json();
+      if (!res.ok){
+        const errText = await res.text().catch(()=>''); 
+        const err = new Error('HTTP ' + res.status + ' ' + res.statusText);
+        err.details = errText;
+        throw err;
+      }
+      //parse JSON instead of text
+      return await res.json();
+    })();
   }
 
   function showSkeletons(){ show(els.skeletonWrap); hide(els.errorCard); }
