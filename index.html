@@ -8,20 +8,11 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-
-  <div class="container">
-    <header class="topbar" style="margin-top: var(--gutter-6);">
-      <div class="brand">
-        <div class="brand__title">FireMeBot</div>
-        <div class="brand__badge muted">Experimental Terminal UI</div>
-      </div>
-      <div class="status" id="status">Ready.</div>
-    </header>
-
-      <!-- Top input/loader bar (full-width, outside container) -->
+  <!-- Top input/loader bar (full-width, outside container) -->
   <div class="top-input" role="search">
     <form id="job-form" class="top-input__form" autocomplete="off">
-      <input class="input top-input__field" id="job-input" type="text" placeholder="Type a job title and press Analyze" autofocus>
+      <label for="job-input" class="sr-only">Job title</label>
+      <input class="input top-input__field" id="job-input" name="title" type="text" placeholder="Type a job title and press Analyze" autofocus aria-describedby="progress-pct">
       <button id="submit-btn" type="submit" class="btn btn--primary top-input__button">Analyze</button>
       <div class="top-input__progress" aria-hidden="true">
         <div class="top-input__bar" id="progress-bar"></div>
@@ -30,28 +21,40 @@
     </form>
   </div>
 
-    <main class="main">
+  <div class="container">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__title">FireMeBot</div>
+        <div class="brand__badge muted">Experimental Terminal UI</div>
+      </div>
+      <div class="status" id="status" role="status" aria-live="polite">Ready.</div>
+    </header>
+
+    <main class="main" id="main-content">
       <!-- Output Panel -->
-      <section class="panel" aria-labelledby="h-output">
+      <section class="panel" aria-labelledby="out-title">
         <div class="card" id="results-card">
-          <h2 class="caps" id="h-output">—</h2>
-          <div class="rule"></div>
+          <h2 class="caps" id="out-title">—</h2>
+          <div class="rule" aria-hidden="true"></div>
           <div class="grid">
             <!-- Gauge -->
             <div>
               <div class="kv__k">Risk Score</div>
-              <div class="gauge">
-                <div class="gauge__bar">
+              <div class="gauge" aria-labelledby="risk-score-label">
+                <span id="risk-score-label" class="sr-only">Automation risk score</span>
+                <div class="gauge__bar" aria-hidden="true">
                   <div class="gauge__fill" id="gauge-fill" style="width:0%"></div>
                 </div>
-                <div class="gauge__value" id="out-score">—</div>
+                <div class="gauge__value" id="out-score" aria-live="polite">—</div>
               </div>
             </div>
+
             <!-- Analysis (typewriter) -->
             <div>
               <div class="kv__k">Analysis</div>
-              <div class="typewriter" id="out-body">—</div>
+              <div class="typewriter" id="out-body" aria-live="polite">—</div>
             </div>
+
             <!-- Tips -->
             <div>
               <div class="kv__k">Tips</div>
@@ -62,18 +65,20 @@
       </section>
 
       <!-- Post Card -->
+      <section aria-labelledby="post-title">
         <div class="card" id="post-card">
-          <h3 class="caps">Post</h3>
-          <div class="rule"></div>
+          <h3 class="caps" id="post-title">Post</h3>
+          <div class="rule" aria-hidden="true"></div>
           <div id="out-post">—</div>
-          <div class="cluster" style="margin-top: var(--gutter-3);">
-            <button id="copy-post" class="btn btn--ghost">Copy</button>
+          <div class="cluster mt-3">
+            <button id="copy-post" class="btn btn--ghost" type="button" aria-describedby="copy-status">Copy</button>
             <span class="muted mono" id="copy-status" aria-live="polite"></span>
           </div>
         </div>
+      </section>
 
       <!-- Error -->
-      <div id="errorCard" class="card" role="alert" style="display:none;">
+      <div id="errorCard" class="card" role="alert" hidden>
         <strong class="bad caps">Error</strong>
         <div class="stack-2">
           <div id="errorMsg" class="mono"></div>
@@ -82,6 +87,7 @@
     </main>
   </div>
 
+  <noscript><p class="mono bad">JavaScript is required for FireMeBot.</p></noscript>
   <script src="./app.js" defer></script>
 </body>
 </html>
