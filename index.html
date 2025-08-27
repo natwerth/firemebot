@@ -8,7 +8,17 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <!-- Top input/loader bar (full-width, outside container) -->
+
+  <div class="container">
+    <header class="topbar" style="margin-top: var(--gutter-6);">
+      <div class="brand">
+        <div class="brand__title">FireMeBot</div>
+        <div class="brand__badge muted">Experimental Terminal UI</div>
+      </div>
+      <div class="status" id="status">Ready.</div>
+    </header>
+
+      <!-- Top input/loader bar (full-width, outside container) -->
   <div class="top-input" role="search">
     <form id="job-form" class="top-input__form" autocomplete="off">
       <input class="input top-input__field" id="job-input" type="text" placeholder="Type a job title and press Analyze" autofocus>
@@ -19,15 +29,6 @@
       </div>
     </form>
   </div>
-
-  <div class="container">
-    <header class="topbar" style="margin-top: var(--gutter-6);">
-      <div class="brand">
-        <div class="brand__title">FireMeBot</div>
-        <div class="brand__badge muted">Experimental Terminal UI</div>
-      </div>
-      <div class="status" id="status">Ready.</div>
-    </header>
 
     <main class="main">
       <!-- Output Panel -->
@@ -61,7 +62,6 @@
       </section>
 
       <!-- Post Card -->
-      <section class="panel">
         <div class="card" id="post-card">
           <h3 class="caps">Post</h3>
           <div class="rule"></div>
@@ -71,7 +71,6 @@
             <span class="muted mono" id="copy-status" aria-live="polite"></span>
           </div>
         </div>
-      </section>
 
       <!-- Error -->
       <div id="errorCard" class="card" role="alert" style="display:none;">
