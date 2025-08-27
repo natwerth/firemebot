@@ -8,8 +8,20 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+  <!-- Top input/loader bar (full-width, outside container) -->
+  <div class="top-input" role="search">
+    <form id="job-form" class="top-input__form" autocomplete="off">
+      <input class="input top-input__field" id="job-input" type="text" placeholder="Type a job title and press Analyze" autofocus>
+      <button id="submit-btn" type="submit" class="btn btn--primary top-input__button">Analyze</button>
+      <div class="top-input__progress" aria-hidden="true">
+        <div class="top-input__bar" id="progress-bar"></div>
+        <div class="top-input__pct" id="progress-pct">0% Complete</div>
+      </div>
+    </form>
+  </div>
+
   <div class="container">
-    <header class="topbar">
+    <header class="topbar" style="margin-top: var(--gutter-6);">
       <div class="brand">
         <div class="brand__title">FireMeBot</div>
         <div class="brand__badge muted">Experimental Terminal UI</div>
@@ -18,52 +30,56 @@
     </header>
 
     <main class="main">
-      <!-- Input Panel -->
-      <section class="panel" aria-labelledby="h-input">
-        <h2 id="h-input">Job Threat Assessment</h2>
-        <div class="rule"></div>
-        <form id="job-form" class="grid" autocomplete="off">
-          <label class="hide-visually" for="job-input">Job Title</label>
-          <div class="formbar">
-            <input class="input" id="job-input" type="text" placeholder="e.g., Barista" autofocus>
-            <button id="submit-btn" type="submit" class="btn btn--primary">Analyze</button>
-          </div>
-        </form>
-        <div id="errorCard" class="card" role="alert" style="display:none; margin-top: var(--gutter-4);">
-          <strong class="bad caps">Error</strong>
-          <div class="stack-2">
-            <div id="errorMsg" class="mono"></div>
+      <!-- Output Panel -->
+      <section class="panel" aria-labelledby="h-output">
+        <div class="card" id="results-card">
+          <h2 class="caps" id="h-output">—</h2>
+          <div class="rule"></div>
+          <div class="grid">
+            <!-- Gauge -->
+            <div>
+              <div class="kv__k">Risk Score</div>
+              <div class="gauge">
+                <div class="gauge__bar">
+                  <div class="gauge__fill" id="gauge-fill" style="width:0%"></div>
+                </div>
+                <div class="gauge__value" id="out-score">—</div>
+              </div>
+            </div>
+            <!-- Analysis (typewriter) -->
+            <div>
+              <div class="kv__k">Analysis</div>
+              <div class="typewriter" id="out-body">—</div>
+            </div>
+            <!-- Tips -->
+            <div>
+              <div class="kv__k">Tips</div>
+              <div id="out-tips">—</div>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- Output Panel -->
-      <section class="panel" aria-labelledby="h-output">
-        <h2 id="h-output">Result</h2>
-        <div class="rule"></div>
-        <div class="output stack-4">
-          <div class="kv">
-            <div class="kv__k">Title</div>
-            <div class="kv__v" id="out-title">—</div>
-          </div>
-          <div class="kv">
-            <div class="kv__k">Score</div>
-            <div class="kv__v" id="out-score">—</div>
-          </div>
-          <div class="kv">
-            <div class="kv__k">Analysis</div>
-            <div class="kv__v" id="out-body">—</div>
-          </div>
-          <div class="kv">
-            <div class="kv__k">Post</div>
-            <div class="kv__v" id="out-post">—</div>
-          </div>
-          <div class="kv">
-            <div class="kv__k">Tips</div>
-            <div class="kv__v" id="out-tips">—</div>
+      <!-- Post Card -->
+      <section class="panel">
+        <div class="card" id="post-card">
+          <h3 class="caps">Post</h3>
+          <div class="rule"></div>
+          <div id="out-post">—</div>
+          <div class="cluster" style="margin-top: var(--gutter-3);">
+            <button id="copy-post" class="btn btn--ghost">Copy</button>
+            <span class="muted mono" id="copy-status" aria-live="polite"></span>
           </div>
         </div>
       </section>
+
+      <!-- Error -->
+      <div id="errorCard" class="card" role="alert" style="display:none;">
+        <strong class="bad caps">Error</strong>
+        <div class="stack-2">
+          <div id="errorMsg" class="mono"></div>
+        </div>
+      </div>
     </main>
   </div>
 
