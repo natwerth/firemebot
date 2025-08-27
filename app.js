@@ -1,5 +1,5 @@
+// FireMeBot — vanilla JS UI (LumonOS skin). No frameworks.
 (() => {
-  // Hardcoded worker endpoint — no button, no localStorage nonsense.
   const WORKER_URL = "https://firemebot-api.nat-1fa.workers.dev/api/roast";
 
   const els = {
@@ -14,74 +14,91 @@
     tips: document.getElementById("out-tips"),
     errCard: document.getElementById("errorCard"),
     errMsg: document.getElementById("errorMsg"),
-    errDetails: document.getElementById("errorDetails"),
   };
 
-  function setStatus(msg){ if (els.status) els.status.textContent = msg || ""; }
-  function showErr(msg, details){
-    if (!els.errCard) return;
-    els.errMsg.textContent = msg || "Unknown error";
-    els.errDetails.textContent = details || "";
+  const setStatus = (msg) => { if (els.status) els.status.textContent = msg; };
+
+  function showErr(msg, details=""){
+    if (!els.errCard || !els.errMsg) return;
+    els.errMsg.textContent = [msg, details].filter(Boolean).join("\n");
     els.errCard.style.display = "block";
   }
-  function hideErr(){ if (els.errCard) els.errCard.style.display = "none"; }
+  function hideErr(){
+    if (els.errCard) els.errCard.style.display = "none";
+    if (els.errMsg) els.errMsg.textContent = "";
+  }
 
   async function fetchRoast(title){
     const res = await fetch(WORKER_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ title })
     });
-    if (!res.ok){
-      const txt = await res.text().catch(()=> "");
-      throw new Error(`HTTP ${res.status} ${res.statusText}: ${txt}`);
+    const text = await res.text();
+    // Try parse as JSON; if model returns stringified JSON in a field, recover.
+    try{
+      const j = JSON.parse(text);
+      return j;
+    }catch{
+      // best-effort: find first {...} block
+      const m = text.match(/\{[\s\S]*\}/);
+      if (m) {
+        try { return JSON.parse(m[0]); } catch {}
+      }
+      throw new Error("Unexpected response from worker");
     }
-    return await res.json();
   }
 
-  function normalize(obj){
-    if (!obj || typeof obj !== "object") return { title: "", score: null, body: "", post: "", tip: [] };
-    const base = obj.roast ?? obj;
-    const out = {};
-    out.title = typeof base.title === "string" ? base.title : "";
-    const n = Number(base.score); out.score = Number.isFinite(n) ? n : null;
-    out.body = typeof base.body === "string" ? base.body.trim() : "";
-    out.post = typeof base.post === "string" ? base.post.trim() : "";
-    if (Array.isArray(base.tip)) out.tip = base.tip.map(x => String(x));
-    else if (typeof base.tip === "string") out.tip = base.tip.split(",").map(s => s.trim()).filter(Boolean);
-    else out.tip = [];
-    return out;
+  function normalize(payload){
+    // Accept either {roast:{...}} or flat fields
+    const obj = payload && payload.roast ? payload.roast : payload;
+    const title = String(obj?.title ?? "").trim();
+    const score = (obj?.score ?? obj?.risk ?? "").toString();
+    const body = String(obj?.body ?? obj?.analysis ?? obj?.message ?? "");
+    const post = String(obj?.post ?? obj?.headline ?? "");
+    const tip  = obj?.tip ?? obj?.tips ?? [];
+    const tips = Array.isArray(tip) ? tip : (typeof tip === "string" ? [tip] : []);
+    return { title, score, body, post, tips };
   }
 
   function render(data){
-    els.title.textContent = data.title || "";
-    els.score.textContent = (data.score ?? "–");
-    els.body.textContent  = data.body || "";
-    els.post.textContent  = data.post || "";
-    els.tips.innerHTML    = data.tip.map(t => `<li>${escapeHtml(String(t))}</li>`).join("");
-  }
-
-  function escapeHtml(s){
-    return s.replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[c] || c));
+    if (els.title) els.title.textContent = data.title || "—";
+    if (els.score) els.score.textContent = data.score !== "" ? data.score : "—";
+    if (els.body)  els.body.textContent  = data.body  || "—";
+    if (els.post)  els.post.textContent  = data.post  || "—";
+    if (els.tips){
+      els.tips.innerHTML = "";
+      if (data.tips && data.tips.length){
+        const ul = document.createElement("ul");
+        for (const t of data.tips){
+          const li = document.createElement("li");
+          li.textContent = t;
+          ul.appendChild(li);
+        }
+        els.tips.appendChild(ul);
+      } else {
+        els.tips.textContent = "—";
+      }
+    }
   }
 
   async function onSubmit(e){
     e.preventDefault();
-    const title = (els.input.value || "").trim();
-    if (!title){ setStatus("Enter a job title."); els.input.focus(); return; }
+    const title = (els.input?.value || "").trim();
+    if (!title){ return; }
     hideErr();
-    setStatus("Loading…");
+    setStatus("Working…");
     els.btn.disabled = true;
-    try {
+    try{
       const raw = await fetchRoast(title);
       const data = normalize(raw);
       render(data);
       setStatus("Done.");
-    } catch (err){
+    }catch(err){
       console.error(err);
       showErr(err.message, (err && err.stack) ? String(err.stack) : "");
       setStatus("Error.");
-    } finally {
+    }finally{
       els.btn.disabled = false;
     }
   }
