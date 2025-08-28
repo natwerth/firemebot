@@ -4,44 +4,42 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FireMeBot — LumonOS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230B1B2B'/%3E%3Cpath d='M6 8h20v2H6zm0 7h20v2H6zm0 7h20v2H6z' fill='%23A7FFE5'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <!-- Top input/loader bar (full-width, outside container) -->
-  <div class="top-input" role="search">
-    <form id="job-form" class="top-input__form" autocomplete="off">
-      <label for="job-input" class="sr-only">Job title</label>
-      <input class="input top-input__field" id="job-input" name="title" type="text" placeholder="Type a job title and press Analyze" autofocus aria-describedby="progress-pct">
-      <button id="submit-btn" type="submit" class="btn btn--primary top-input__button">Analyze</button>
-      <div class="top-input__progress" aria-hidden="true">
-        <div class="top-input__bar" id="progress-bar"></div>
-        <div class="top-input__pct" id="progress-pct">0% Complete</div>
-      </div>
-    </form>
-  </div>
 
   <div class="container">
     <header class="topbar">
       <div class="brand">
         <div class="brand__title">FireMeBot</div>
-        <div class="brand__badge muted">Experimental Terminal UI</div>
+        <div class="brand__badge muted">Will AI replace you?</div>
       </div>
       <div class="status" id="status" role="status" aria-live="polite">Ready.</div>
     </header>
+
+    <!-- Search bar moved below header -->
+    <form id="job-form" class="top-input__form" autocomplete="off">
+      <label for="job-input" class="sr-only">Job title</label>
+      <div class="top-input__field" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <input class="input" id="job-input" name="title" type="text" placeholder="Enter your job title..." autofocus aria-describedby="progress-pct">
+        <span id="progress-pct">0%</span>
+      </div>
+      <button id="submit-btn" type="submit" class="btn btn--primary top-input__button">Analyze</button>
+    </form>
 
     <main class="main" id="main-content">
       <!-- Output Panel -->
       <section class="panel" aria-labelledby="out-title">
         <div class="card" id="results-card">
-          <h2 class="caps" id="out-title">—</h2>
+          <h2 id="out-title">—</h2>
           <div class="rule" aria-hidden="true"></div>
           <div class="grid">
             <!-- Gauge -->
             <div>
-              <div class="kv__k">Risk Score</div>
-              <div class="gauge" aria-labelledby="risk-score-label">
-                <span id="risk-score-label" class="sr-only">Automation risk score</span>
+              <div class="kv__k" id="risk-score-label">Risk Score</div>
+              <div class="gauge" role="meter" aria-labelledby="risk-score-label" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                 <div class="gauge__bar" aria-hidden="true">
                   <div class="gauge__fill" id="gauge-fill" style="width:0%"></div>
                 </div>
@@ -52,7 +50,7 @@
             <!-- Analysis (typewriter) -->
             <div>
               <div class="kv__k">Analysis</div>
-              <div class="typewriter" id="out-body" aria-live="polite">—</div>
+              <div id="out-body" aria-live="polite">—</div>
             </div>
 
             <!-- Tips -->
@@ -87,7 +85,25 @@
     </main>
   </div>
 
-  <noscript><p class="mono bad">JavaScript is required for FireMeBot.</p></noscript>
+</noscript>
+  <footer id="fm-footer">
+    <a href="https://natwerth.com" target="_blank" rel="noopener noreferrer" aria-label="natwerth.com">
+      <span class="logo" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 152.5 96.57"
+             role="img" aria-label="Nat Werth Logo">
+          <title>Nat Werth Logo</title>
+          <g transform="translate(2,1)" fill="currentColor">
+            <path d="M13.5,30.56c18,0,27,18,27,18,0,0-9-18,9-18s18,63,0,63-27-27-27-27c0,0,9,27-9,27s-18-63,0-63Z"/>
+            <path d="M148.5,30.56c0,18-18,18-18,18,0,0,9,54-18,45,0,0,18-63-18-72,9-9,54-9,54,9Z"/>
+            <path d="M68.79,0s2.6,20.33,21.59,21.55c0,0-18.87,2.24-21.59,21.55,0,0-2.68-19.69-21.59-21.55,0,0,17.69-2.01,21.59-21.55Z"/>
+            <path d="M91.22,38.8s1.11,8.2,9.22,8.7c0,0-8.06.91-9.22,8.7,0,0-1.15-7.95-9.22-8.7,0,0,7.56-.81,9.22-8.7Z"/>
+          </g>
+        </svg>
+      </span>
+      <span class="wordmark">natwerth.com</span>
+    </a>
+  </footer>
   <script src="./app.js" defer></script>
 </body>
 </html>
