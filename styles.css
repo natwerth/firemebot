@@ -20,6 +20,7 @@
   --easing:cubic-bezier(.2,.6,.2,1);
 
   --card-li: color-mix(in srgb, var(--ink) 80%, var(--ink-muted) 20%);
+  --header-h: 56px;
 }
 
 /* Base text everywhere */
@@ -56,6 +57,17 @@ html, body{
 .bad{ color: var(--danger); }
 .mt-3{ margin-top: var(--gutter-3); }
 .cluster{ display:inline-flex; align-items:center; gap:var(--gutter-2); }
+
+/* Vertical stack utilities for consistent in-card spacing */
+.stack-2, .stack-3, .stack-4{
+  display:flex;
+  flex-direction: column;
+}
+.stack-2{ gap: var(--gutter-2); }
+.stack-3{ gap: var(--gutter-3); }
+.stack-4{ gap: var(--gutter-4); }
+/* When a stack is used, zero child margins so gap controls rhythm */
+.stack-2 > *, .stack-3 > *, .stack-4 > *{ margin: 0; }
 .grid{
   display:grid;
   grid-template-columns: 1fr;
@@ -68,6 +80,35 @@ html, body{
 .grid > *{ min-width:0; }
 .rule{ height:1px; background:var(--rule); margin: var(--gutter-3) 0; }
 .card li{ color: var(--card-li); }
+
+/* Tighten spacing for Tips list */
+#out-tips{ 
+  margin: 0;                 /* remove UA default vertical margins */
+  padding-left: 1.25rem;     /* keep bullet indent */
+}
+#out-tips li{ 
+  margin: 0;                 /* reset any margins added by content */
+}
+#out-tips li + li{ 
+  margin-top: var(--gutter-2); /* controlled, small space between bullets */
+}
+#out-tips p{ 
+  margin: 0;                 /* some renderers add <p> inside li */
+}
+
+/* Normalize any rendering shape for #out-tips (div or ul) */
+#out-tips,
+#out-tips ul,
+#out-tips ol{
+  margin: 0;
+  padding-left: 1.25rem;     /* consistent bullet indent */
+  line-height: 1.4;          /* slightly tighter bullets */
+}
+#out-tips > li{ margin: 0; }
+#out-tips ul > li,
+#out-tips ol > li{ margin: 0; }
+#out-tips li + li{ margin-top: var(--gutter-2); }
+
 
 /* Buttons */
 .btn{
@@ -105,6 +146,8 @@ html, body{
   border-radius:6px;
   outline:none;
   box-sizing: border-box; /* Safari: include padding/border in width */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .input::placeholder{ color: var(--ink-muted); }
@@ -115,15 +158,30 @@ html, body{
   margin: 0 auto;
   padding: var(--gutter-6) var(--gutter-4);
 }
-.topbar{
+.header, .topbar{
+  position: fixed;
   display:flex; justify-content:space-between; align-items:flex-end;
   gap: var(--gutter-4);
   margin-bottom: var(--gutter-6);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--rule);
+  /* full-bleed header bar */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding-left: var(--gutter-4);
+  padding-right: var(--gutter-4);
+  box-sizing: border-box;
+  min-height: var(--header-h);
 }
-.brand__title{ font-size:18px; line-height:1; }
+.brand__title{ font-size:24px; font-weight:bold; line-height:1; }
 .brand__badge{ font-size:12px; }
 
 .main{ display:block; }
+/* Note: .header (alias for previous .topbar) and .header-bar (alias for previous .top-input) */
 
 /* Cards / Panels */
 .panel{ margin-top: var(--gutter-4); }
@@ -137,8 +195,15 @@ html, body{
   box-shadow: 0 0 0 1px rgba(167,255,229,0.05) inset;
 }
 .card + .card{ margin-top: var(--gutter-6); }
+/* Default card heading spacing; stacks will override child margins */
 .card h2, .card h3{ margin: 0 0 var(--gutter-3) 0; }
-.card h2 + *{ margin-top: var(--gutter-3); }
+/* Tighter title-to-rule spacing in key cards */
+#results-card h2{ margin-bottom: var(--gutter-2); }
+#results-card .rule{ margin: var(--gutter-2) 0 var(--gutter-3); }
+#post-card h3{ margin-bottom: var(--gutter-2); }
+#post-card .rule{ margin: var(--gutter-2) 0 var(--gutter-3); }
+/* Remove the automatic next-sibling bump when using stacks */
+.card :is(.stack-2, .stack-3, .stack-4) > :is(h1,h2,h3,h4) + *{ margin-top: 0; }
 
 /* ========================================================================== */
 /*  Footer (inline SVG + link)                                                */
@@ -149,6 +214,7 @@ html, body{
   justify-content:center;
   align-items:center;
   margin-top: var(--gutter-6);
+  margin-bottom: var(--gutter-6);
   padding: var(--gutter-6) var(--gutter-4);   /* requested padding */
   color: var(--ink-muted);                      /* SVG fill via currentColor */
   background: transparent;                    /* keep page bg, color drives fill */
@@ -207,36 +273,44 @@ html, body{
 /* play shimmer only while progress pct is loading */
 @keyframes fm-shimmer { to { transform: translateX(150%); } }
 
-body:has(.top-input [data-state="loading"] #progress-pct) #fm-footer .logo::after{
+body:has(.top-input [data-state="loading"] #progress-pct),
+body:has(.header-bar [data-state="loading"] #progress-pct) #fm-footer .logo::after{
   opacity: 1;
   animation: fm-shimmer 1.6s linear infinite;
 }
 
 /* ========================================================================== */
-/*  Sticky Top Input + Loader                                                 */
+/*  Header Bar (sticky) + Loader                                               */
 /* ========================================================================== */
 
-.top-input{
-  position:sticky; top:0; z-index:99;
+.top-input, .header-bar{
+  position:sticky; top:var(--header-h); z-index:99;
   border-bottom:1px solid var(--rule);
   background: var(--bg);
   padding: var(--gutter-3) var(--gutter-4);
+  margin-top: var(--gutter-6);
   margin-bottom: var(--gutter-6);
   box-shadow: none;
 }
-.top-input__form{
+/* remove margin once results are fully loaded */
+.top-input[data-state="done"],
+.header-bar[data-state="done"] {
+  margin-top: 0;
+}
+
+.top-input__form, .header-bar__form{
   display:flex;
   align-items:stretch;
   gap: var(--gutter-2);
   position:relative;
-  flex-wrap: wrap;                /* stack on narrow */
+  flex-wrap: nowrap;
 }
-.top-input__field{
+.top-input__field, .header-bar__field{
   flex: 1 1 260px;  /* grow, shrink, give a sensible min basis */
   min-width:0;
   border-radius:0;
 }
-.top-input__button{
+.top-input__button, .header-bar__button{
   position:relative;
   z-index:2;
   white-space:nowrap;
@@ -251,13 +325,14 @@ body:has(.top-input [data-state="loading"] #progress-pct) #fm-footer .logo::afte
 }
 
 /* Input progress fill as background */
-.top-input__field{
+.top-input__field, .header-bar__field{
   position: relative;
   --pct: 0; /* 0..100 */
   background: transparent;
   isolation: isolate; /* for blend-mode option */
+  min-width: 0;
 }
-.top-input__field::before{
+.top-input__field::before, .header-bar__field::before{
   content:"";
   position:absolute; inset:0;
   width: calc(var(--pct) * 1%);
@@ -266,7 +341,7 @@ body:has(.top-input [data-state="loading"] #progress-pct) #fm-footer .logo::afte
   z-index: 1;
   transition: width var(--dur-slow) var(--easing);
 }
-.top-input__field .input{
+.top-input__field .input, .header-bar__field .input{
   position: relative; z-index: 1;
   background: transparent;
 }
@@ -276,7 +351,7 @@ body:has(.top-input [data-state="loading"] #progress-pct) #fm-footer .logo::afte
   top:50%;
   left: clamp(1%, calc(var(--pct) * 1%), 100%);
   transform: translate(-100%, -50%);
-  font-size:12px;
+  font-size: clamp(12px, 3.4vw, 16px);
   white-space: nowrap;
   pointer-events:none;
   z-index: 10;                  /* above input + fill */
@@ -287,7 +362,9 @@ body:has(.top-input [data-state="loading"] #progress-pct) #fm-footer .logo::afte
               left var(--dur-med) var(--easing);
   will-change: opacity, left;
 }
-.top-input__field[data-fill-at-right="true"] .input::placeholder { opacity: 0; color: transparent; }
+.top-input__field[data-fill-at-right="true"] .input::placeholder, .header-bar__field[data-fill-at-right="true"] .input::placeholder {
+  opacity: 0; color: transparent;
+}
 
 /* Show only while active (loading) */
 /* Show + fade in when not idle; 0 at 30%, 1 at 100% */
@@ -295,43 +372,52 @@ body:has(.top-input [data-state="loading"] #progress-pct) #fm-footer .logo::afte
 .top-input__field[data-state="working"] #progress-pct,
 .top-input__field[data-state="loading"] #progress-pct,
 .top-input__field[data-state="fadeout"] #progress-pct,
+.header-bar__field[data-state="active"] #progress-pct,
+.header-bar__field[data-state="working"] #progress-pct,
+.header-bar__field[data-state="loading"] #progress-pct,
+.header-bar__field[data-state="fadeout"] #progress-pct,
 .top-input__form[data-state="active"] #progress-pct,
 .top-input__form[data-state="working"] #progress-pct,
 .top-input__form[data-state="loading"] #progress-pct,
 .top-input__form[data-state="fadeout"] #progress-pct,
+.header-bar__form[data-state="active"] #progress-pct,
+.header-bar__form[data-state="working"] #progress-pct,
+.header-bar__form[data-state="loading"] #progress-pct,
+.header-bar__form[data-state="fadeout"] #progress-pct,
 .top-input [data-state="active"] #progress-pct,
 .top-input [data-state="working"] #progress-pct,
 .top-input [data-state="loading"] #progress-pct,
-.top-input [data-state="fadeout"] #progress-pct{
+.top-input [data-state="fadeout"] #progress-pct,
+.header-bar [data-state="active"] #progress-pct,
+.header-bar [data-state="working"] #progress-pct,
+.header-bar [data-state="loading"] #progress-pct,
+.header-bar [data-state="fadeout"] #progress-pct{
   opacity: calc((var(--pct) - 30) / 70);
 }
 @keyframes pct-enter {
   from { opacity: 0; transform: translate(calc(-100% + 8px), -50%); }
   to   { opacity: 1; transform: translate(-100%, -50%); }
 }
-.top-input__field[data-darktext="true"] #progress-pct{
+.top-input__field[data-darktext="true"] #progress-pct, .header-bar__field[data-darktext="true"] #progress-pct{
   animation: pct-enter 180ms ease-out;
 }
-.top-input__field[data-fill-at-right="true"] #progress-pct{
+.top-input__field[data-fill-at-right="true"] #progress-pct, .header-bar__field[data-fill-at-right="true"] #progress-pct{
   color: var(--paper-ink);
 }
-.top-input__field[data-onlight="true"] .input{
+.top-input__field[data-onlight="true"] .input, .header-bar__field[data-onlight="true"] .input{
   color: var(--paper-ink);
 }
-.top-input__field[data-onlight="true"] .input::placeholder{
+.top-input__field[data-onlight="true"] .input::placeholder, .header-bar__field[data-onlight="true"] .input::placeholder{
   color: color-mix(in srgb, var(--paper-ink) 65%, #666 35%);
 }
-.top-input__field[data-darktext="true"] .input{
+.top-input__field[data-darktext="true"] .input, .header-bar__field[data-darktext="true"] .input{
   color: var(--bg);
 }
-.top-input__field[data-darktext="true"] .input::placeholder{
-  color: color-mix(in srgb, var(--bg) 65%, #9aa 35%);
-}
-.top-input__field[data-darktext="true"] #progress-pct{
+.top-input__field[data-darktext="true"] #progress-pct, .header-bar__field[data-darktext="true"] #progress-pct{
   color: var(--bg);
 }
 
-.top-input__progress{
+.top-input__progress, .header-bar__progress{
   position:absolute; left:0; right:0; bottom:-1px; height:3px;
   background:transparent;
 }
@@ -341,10 +427,24 @@ body:has(.top-input [data-state="loading"] #progress-pct) #fm-footer .logo::afte
   transition: width var(--dur-slow) var(--easing);
 }
 @media (max-width: 520px){
-  .top-input__form{ flex-wrap: wrap; }
-  .top-input__field{ width:100%; }
-  .top-input__button{ width:100%; margin-left:0; }
+  .top-input__form, .header-bar__form{
+    flex-wrap: nowrap;
+    gap: var(--gutter-2);
+  }
+  .top-input__field, .header-bar__field{
+    flex: 1 1 auto;
+    min-width: 0;          /* allow input to actually shrink */
+  }
+  .top-input__button, .header-bar__button{
+    flex: 0 0 auto;
+    width: auto;
+    margin-left: 0;
+  }
+  .top-input__button .btn, .header-bar__button .btn{
+    padding: 8px 10px;     /* tighter tap target on phones */
+  }
 }
+
 
 /* ========================================================================== */
 /*  Gauge                                                                     */
@@ -381,12 +481,11 @@ body:has(.top-input [data-state="loading"] #progress-pct) #fm-footer .logo::afte
   max-width: 66ch;
 }
 @media (prefers-reduced-motion: no-preference){
-  /* Add .typing via JS when writing starts; remove when complete */
-  .typewriter.typing{
+  .typewriter.typing,
+  .typewriter li.typing{
     border-right: 1px solid var(--accent);
     animation: caret-blink .75s step-end infinite;
   }
-  @keyframes caret-blink{ 50%{ border-color: transparent; } }
 }
 
 /* ========================================================================== */
@@ -395,8 +494,8 @@ body:has(.top-input [data-state="loading"] #progress-pct) #fm-footer .logo::afte
 
 .kv__k{
   font-size:12px;
+  font-weight: bold;
   color: var(--ink-muted);
-  text-transform: uppercase;
   letter-spacing: .08em;
   margin-bottom: var(--gutter-2);
 }
@@ -415,7 +514,7 @@ body:has(.top-input [data-state="loading"] #progress-pct) #fm-footer .logo::afte
 
 @media (min-width:1px){
   /* ensure in-page links/alerts don’t hide beneath sticky header */
-  body{ scroll-padding-top: 56px; }
+  body{ scroll-padding-top: var(--header-h); }
 }
 
 /* ========================================================================== */
