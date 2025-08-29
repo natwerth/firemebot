@@ -10,15 +10,15 @@
 </head>
 <body>
 
-  <div class="container">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand__title">FireMeBot</div>
-        <div class="brand__badge muted">Will AI replace you?</div>
-      </div>
-      <div class="status" id="status" role="status" aria-live="polite">Ready.</div>
-    </header>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand__title">FireMeBot</div>
+      <div class="brand__badge muted">Will AI replace you?</div>
+    </div>
+    <div class="status" id="status" role="status" aria-live="polite">Ready.</div>
+  </header>
 
+  <div class="container">
     <!-- Search bar moved below header -->
     <form id="job-form" class="top-input__form" autocomplete="off">
       <label for="job-input" class="sr-only">Job title</label>
@@ -32,31 +32,33 @@
     <main class="main" id="main-content">
       <!-- Output Panel -->
       <section class="panel" aria-labelledby="out-title">
+        <h2 id="out-title">—</h2>
         <div class="card" id="results-card">
-          <h2 id="out-title">—</h2>
           <div class="rule" aria-hidden="true"></div>
-          <div class="grid">
-            <!-- Gauge -->
-            <div>
-              <div class="kv__k" id="risk-score-label">Risk Score</div>
-              <div class="gauge" role="meter" aria-labelledby="risk-score-label" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                <div class="gauge__bar" aria-hidden="true">
-                  <div class="gauge__fill" id="gauge-fill" style="width:0%"></div>
+          <div class="stack-3">
+            <div class="grid">
+              <!-- Gauge -->
+              <div class="stack-2">
+                <div class="kv__k" id="risk-score-label">Risk Score</div>
+                <div class="gauge" role="meter" aria-labelledby="risk-score-label" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0 out of 100">
+                  <div class="gauge__bar" aria-hidden="true">
+                    <div class="gauge__fill" id="gauge-fill" style="width:0%"></div>
+                  </div>
+                  <div class="gauge__value" id="out-score" aria-live="polite">—</div>
                 </div>
-                <div class="gauge__value" id="out-score" aria-live="polite">—</div>
               </div>
-            </div>
 
-            <!-- Analysis (typewriter) -->
-            <div>
-              <div class="kv__k">Analysis</div>
-              <div id="out-body" aria-live="polite">—</div>
-            </div>
+              <!-- Analysis (typewriter) -->
+              <div class="stack-2">
+                <div class="kv__k">Analysis</div>
+                <div id="out-analysis" class="typewriter" aria-live="polite">—</div>
+              </div>
 
-            <!-- Tips -->
-            <div>
-              <div class="kv__k">Tips</div>
-              <div id="out-tips">—</div>
+              <!-- Tips -->
+              <div class="stack-2">
+                <div class="kv__k">Tips</div>
+                <div id="out-tips" class="typewriter">—</div>
+              </div>
             </div>
           </div>
         </div>
@@ -67,10 +69,12 @@
         <div class="card" id="post-card">
           <h3 class="caps" id="post-title">Post</h3>
           <div class="rule" aria-hidden="true"></div>
-          <div id="out-post">—</div>
-          <div class="cluster mt-3">
-            <button id="copy-post" class="btn btn--ghost" type="button" aria-describedby="copy-status">Copy</button>
-            <span class="muted mono" id="copy-status" aria-live="polite"></span>
+          <div class="stack-3">
+            <div id="out-post" class="typewriter">—</div>
+            <div class="cluster">
+              <button id="copy-post" class="btn btn--ghost" type="button" aria-describedby="copy-status">Copy</button>
+              <span class="muted mono" id="copy-status" aria-live="polite"></span>
+            </div>
           </div>
         </div>
       </section>
@@ -85,7 +89,6 @@
     </main>
   </div>
 
-</noscript>
   <footer id="fm-footer">
     <a href="https://natwerth.com" target="_blank" rel="noopener noreferrer" aria-label="natwerth.com">
       <span class="logo" aria-hidden="true">

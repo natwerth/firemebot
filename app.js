@@ -16,8 +16,9 @@
     labelEnter: 220,     // ms: % label one-shot entrance
     labelDelay: 120,     // ms: delay before label re-appears inside the bar
     progressTick: 200,   // ms: interval for faux progress
-    settle: 2000,         // ms: time to rest at 2000 before resetting to 0
-    typewriter: 50        // ms/char: body typing speed
+    settle: 2000,        // ms: time to rest at 2000 before resetting to 0
+    typewriter: 50,      // ms/char: body typing speed
+    extraCreepAfter: 10000 // ms: after this, glide toward 99%
   });
 
   const PROGRESS = Object.freeze({
@@ -39,7 +40,7 @@
     status: document.getElementById('status'),
     titleHdr: document.getElementById('out-title'),
     score: document.getElementById('out-score'),
-    body: document.getElementById('out-body'),
+    body: document.getElementById('out-analysis'),
     post: document.getElementById('out-post'),
     tips: document.getElementById('out-tips'),
     errCard: document.getElementById('errorCard'),
@@ -84,6 +85,13 @@
   // ---------------------------------------------------------------------------
   const setStatus = (msg) => { if (els.status) els.status.textContent = msg; };
   const setAriaNow = (el, val) => { if (el) el.setAttribute('aria-valuenow', String(val)); };
+
+  // Escape text for safe HTML injection
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
+    })[m]);
+  }
 
   function showErr(msg, details = ''){
     if (!els.errCard || !els.errMsg) return;
@@ -182,13 +190,20 @@
 
     clearInterval(progressTimer);
     let p = PROGRESS.start;
+    const startedAt = Date.now();
 
     // re-appear inside the bar shortly after start
     setTimeout(() => { pctState = STATE.active; setPctActive(p); }, DUR.labelDelay);
 
     progressTimer = setInterval(() => {
-      // Slow creep up to 87% while waiting
-      p = Math.min(PROGRESS.creepCeil, p + Math.max(1, Math.floor((90 - p) * 0.06)));
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < DUR.extraCreepAfter){
+        // Slow creep up to 87% while waiting
+        p = Math.min(PROGRESS.creepCeil, p + Math.max(1, Math.floor((90 - p) * 0.03)));
+      } else {
+        // After a few seconds, glide toward 99% so it doesn't feel stuck
+        p = Math.min(99, p + Math.max(1, Math.floor((100 - p) * 0.08)));
+      }
       setProgress(p);
     }, DUR.progressTick);
   }
@@ -270,6 +285,55 @@
   // ---------------------------------------------------------------------------
   // Rendering
   // ---------------------------------------------------------------------------
+  // Render Tips as a plain UL with plain LIs (no inline margins/classes)
+  function renderTips(tips){
+    if (!els.tips) return;
+    const items = Array.isArray(tips) ? tips.filter(Boolean) : [];
+    if (!items.length){ els.tips.textContent = '—'; return; }
+    const html = `<ul>${items.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
+    els.tips.innerHTML = html;
+  }
+
+  // Typewriter Tips (character-by-character per <li>, no extra wrappers)
+  async function typeTips(items, token){
+    if (!els.tips) return;
+    const list = Array.isArray(items) ? items.filter(Boolean).map(String) : [];
+    if (!list.length){ els.tips.textContent = '—'; return; }
+
+    const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const allow = document.body && document.body.hasAttribute('data-allow-reduced');
+
+    els.tips.innerHTML = '';
+    els.tips.classList.add('typewriter');
+    const ul = document.createElement('ul');
+    els.tips.appendChild(ul);
+
+    for (const t of list){
+      if (token != null && token !== renderSeq) return; // a new render started — abort
+      const li = document.createElement('li');
+      ul.appendChild(li);
+
+      // show caret on the active line
+      li.classList.add('typing');
+
+      if (prefersReduce && !allow){
+        li.textContent = t;
+        li.classList.remove('typing');
+        continue;
+      }
+      for (const ch of t){
+        if (token != null && token !== renderSeq) return;
+        li.textContent += ch;
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(r => setTimeout(r, DUR.typewriter));
+      }
+      li.classList.remove('typing');
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(r => setTimeout(r, Math.min(200, DUR.typewriter * 2)));
+    }
+    els.tips.classList.remove('typing');
+  }
+
   async function typewriterEffect(el, text, token) {
     if (!el) return;
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -359,16 +423,8 @@
     }
 
     if (els.tips){
-      els.tips.innerHTML = '';
       if (data.tips && data.tips.length){
-        const ul = document.createElement('ul');
-        els.tips.appendChild(ul);
-        for (const t of data.tips){
-          const li = document.createElement('li');
-          ul.appendChild(li);
-          // eslint-disable-next-line no-await-in-loop
-          await typewriterEffect(li, String(t));
-        }
+        await typeTips(data.tips, token);
       } else {
         els.tips.textContent = '—';
       }
@@ -390,10 +446,8 @@
     }
   });
 
-  try {
-    const saved = localStorage.getItem(LS_LAST_TITLE);
-    if (saved && els.input && !els.input.value){ els.input.value = saved; }
-  } catch {}
+  try { localStorage.removeItem(LS_LAST_TITLE); } catch {}
+  if (els.input) els.input.value = '';
 
   // ---------------------------------------------------------------------------
   // Submit flow
@@ -403,7 +457,7 @@
     els.input?.blur();
     let success = false;
     const title = (els.input?.value || '').trim();
-    try { localStorage.setItem(LS_LAST_TITLE, title); } catch {}
+    // Removed localStorage.setItem(LS_LAST_TITLE, title);
     if (!title) return;
 
     hideErr();
