@@ -73,6 +73,49 @@
             <div id="out-post" class="typewriter">—</div>
             <div class="cluster">
               <button id="copy-post" class="btn btn--ghost" type="button" aria-describedby="copy-status">Copy</button>
+              <button id="shareBtn" class="btn btn--ghost" type="button" aria-label="Share post">Share</button>
+              <script>
+                const shareBtn = document.getElementById('shareBtn');
+                const statusEl = document.getElementById('copy-status');
+
+                shareBtn.addEventListener('click', async () => {
+                  shareBtn.disabled = true;
+
+                  // Build a clean, short title from the post content with sane fallbacks
+                  const postTextRaw = (document.getElementById('out-post')?.textContent || '').replace(/\s+/g,' ').trim();
+                  const fallbackTitle = (document.getElementById('out-title')?.textContent || document.title || 'FireMeBot').trim();
+                  const baseTitle = (postTextRaw && postTextRaw !== '—') ? postTextRaw : fallbackTitle;
+                  const shortTitle = baseTitle.length > 25 ? baseTitle.slice(0, 25) + '…' : baseTitle;
+
+                  // Point to a FireMeBot share route so OG tags can control previews
+                  const shareUrl = new URL('https://firemebot.com/share');
+                  shareUrl.searchParams.set('title', shortTitle);
+
+                  const data = {
+                    title: shortTitle,
+                    text: 'Check out this site before your boss replaces you with a toaster:',
+                    url: shareUrl.toString()
+                  };
+
+                  try {
+                    if (!navigator.share) throw new Error('no-web-share');
+                    await navigator.share(data);
+                  } catch (e) {
+                    try {
+                      if (navigator.clipboard?.writeText) {
+                        await navigator.clipboard.writeText(data.url);
+                        if (statusEl) statusEl.textContent = 'Link copied.';
+                      } else {
+                        window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(`${data.text} ${data.url}`), '_blank');
+                      }
+                    } catch {
+                      window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(`${data.text} ${data.url}`), '_blank');
+                    }
+                  } finally {
+                    setTimeout(() => { if (statusEl) statusEl.textContent = ''; shareBtn.disabled = false; }, 1800);
+                  }
+                });
+              </script>
               <span class="muted mono" id="copy-status" aria-live="polite"></span>
             </div>
           </div>

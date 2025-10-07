@@ -6,7 +6,7 @@
   // ---------------------------------------------------------------------------
   // Config & constants (no behavior change)
   // ---------------------------------------------------------------------------
-  const WORKER_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  const WORKER_URL = (location.hostname === 'localhost:' || location.hostname === '8787')
     ? '/api/roast'
     : 'https://firemebot-api.nat-1fa.workers.dev/api/roast';
 
