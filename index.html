@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FireMeBot — LumonOS</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230B1B2B'/%3E%3Cpath d='M6 8h20v2H6zm0 7h20v2H6zm0 7h20v2H6z' fill='%23A7FFE5'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -15,7 +16,7 @@
       <div class="brand__title">FireMeBot</div>
       <div class="brand__badge muted">Will AI replace you?</div>
     </div>
-    <div class="status" id="status" role="status" aria-live="polite">Ready.</div>
+    <div class="status" style="margin-bottom: 1rem;" id="status" role="status" aria-live="polite">Ready.</div>
   </header>
 
   <div class="container">
@@ -34,6 +35,7 @@
       <section class="panel" aria-labelledby="out-title">
         <h2 id="out-title">—</h2>
         <div class="card" id="results-card">
+          <h3 class="caps" id="out-job-title">—</h3>
           <div class="rule" aria-hidden="true"></div>
           <div class="stack-3">
             <div class="grid">
@@ -44,7 +46,7 @@
                   <div class="gauge__bar" aria-hidden="true">
                     <div class="gauge__fill" id="gauge-fill" style="width:0%"></div>
                   </div>
-                  <div class="gauge__value" id="out-score" aria-live="polite">—</div>
+                  <div class="gauge__value" id="out-score" aria-live="polite">0%</div>
                 </div>
               </div>
 
@@ -67,13 +69,17 @@
       <!-- Post Card -->
       <section aria-labelledby="post-title">
         <div class="card" id="post-card">
-          <h3 class="caps" id="post-title">Post</h3>
+          <h3 class="caps" id="post-title">Social Post</h3>
           <div class="rule" aria-hidden="true"></div>
           <div class="stack-3">
             <div id="out-post" class="typewriter">—</div>
             <div class="cluster">
-              <button id="copy-post" class="btn btn--ghost" type="button" aria-describedby="copy-status">Copy</button>
-              <button id="shareBtn" class="btn btn--ghost" type="button" aria-label="Share post">Share</button>
+              <button id="copy-post" class="btn btn--ghost" type="button" aria-describedby="copy-status">
+                <i class="fa-solid fa-copy" aria-hidden="true"></i>
+              </button>
+              <button id="shareBtn" class="btn btn--ghost" type="button" aria-label="Share post">
+                <i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i>
+              </button>
               <script>
                 const shareBtn = document.getElementById('shareBtn');
                 const statusEl = document.getElementById('copy-status');
@@ -101,15 +107,16 @@
                     if (!navigator.share) throw new Error('no-web-share');
                     await navigator.share(data);
                   } catch (e) {
+                    // Fallback: copy the URL to clipboard if possible
                     try {
                       if (navigator.clipboard?.writeText) {
                         await navigator.clipboard.writeText(data.url);
                         if (statusEl) statusEl.textContent = 'Link copied.';
                       } else {
-                        window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(`${data.text} ${data.url}`), '_blank');
+                        if (statusEl) statusEl.textContent = 'Sharing not supported on this device.';
                       }
                     } catch {
-                      window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(`${data.text} ${data.url}`), '_blank');
+                      if (statusEl) statusEl.textContent = 'Sharing not supported on this device.';
                     }
                   } finally {
                     setTimeout(() => { if (statusEl) statusEl.textContent = ''; shareBtn.disabled = false; }, 1800);
@@ -120,6 +127,13 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section aria-label="try-again-card">
+        <button type="button" class="btn btn--ghost try-again-btn" onclick="window.location.reload()" style="display:flex; align-items:center; color: var(--ink-muted);">
+          <i class="fa-solid fa-rotate-right" aria-hidden="true" style="font-size:3rem;"></i>
+          <span style="font-size:1.25rem;"></span>
+        </button>
       </section>
 
       <!-- Error -->

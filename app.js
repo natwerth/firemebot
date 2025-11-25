@@ -10,14 +10,11 @@
     ? '/api/roast'
     : 'https://firemebot-api.nat-1fa.workers.dev/api/roast';
 
-  const LS_LAST_TITLE = 'fmb:lastTitle';
-
   const DUR = Object.freeze({
-    labelEnter: 220,     // ms: % label one-shot entrance
-    labelDelay: 120,     // ms: delay before label re-appears inside the bar
-    progressTick: 200,   // ms: interval for faux progress
-    settle: 2000,        // ms: time to rest at 2000 before resetting to 0
-    typewriter: 50,      // ms/char: body typing speed
+    labelEnter: 220,       // ms: % label one-shot entrance
+    labelDelay: 120,       // ms: delay before label re-appears inside the bar
+    progressTick: 200,     // ms: interval for faux progress
+    settle: 2000,          // ms: time to rest at 100 before resetting to 0
     extraCreepAfter: 10000 // ms: after this, glide toward 99%
   });
 
@@ -39,6 +36,7 @@
     btn: document.getElementById('submit-btn'),
     status: document.getElementById('status'),
     titleHdr: document.getElementById('out-title'),
+    jobTitle: document.getElementById('out-job-title'),
     score: document.getElementById('out-score'),
     body: document.getElementById('out-analysis'),
     post: document.getElementById('out-post'),
@@ -53,30 +51,39 @@
     gauge: document.querySelector('.gauge')
   };
 
+  let lastUserTitle = '';
+
   // ---------------------------------------------------------------------------
-  // Card visibility helpers (hide results while loading; reveal at 100%)
+  // Result card visibility helpers
   // ---------------------------------------------------------------------------
   const resultCards = (() => {
-    const targets = [els.titleHdr, els.body, els.score, els.post, els.tips];
+    const targets = [els.titleHdr, els.jobTitle, els.body, els.score, els.post, els.tips];
     const cards = new Set();
-    for (const t of targets){
+    for (const t of targets) {
       if (!t) continue;
       const c = t.closest('.card');
       if (c) cards.add(c);
     }
     return Array.from(cards);
+    
   })();
+
+  const tryAgainSection = document.querySelector('section[aria-label="try-again-card"]');
 
   function setCardsVisible(isVisible){
     for (const c of resultCards){
       if (!c) continue;
       if (isVisible){
-        c.style.display = 'block';
+        c.style.display = 'block'; // override CSS default of display:none
         c.removeAttribute('aria-hidden');
       } else {
         c.style.display = 'none';
         c.setAttribute('aria-hidden', 'true');
       }
+    }
+    // Add THIS right after the for-loop:
+    if (tryAgainSection) {
+      tryAgainSection.style.display = isVisible ? 'block' : 'none';
     }
   }
 
@@ -98,6 +105,7 @@
     els.errMsg.textContent = [msg, details].filter(Boolean).join('\n');
     els.errCard.style.display = 'block';
   }
+
   function hideErr(){
     if (els.errCard) els.errCard.style.display = 'none';
     if (els.errMsg) els.errMsg.textContent = '';
@@ -125,7 +133,6 @@
   let lastPct = 0;
   let pctState = STATE.idle; // 'idle' | 'fadeout' | 'active'
   let pctShowThresholdPx = 0; // dynamic: input text width + padding
-  let renderSeq = 0; // increments per render; cancels old typewriter loops
 
   function setPctIdle(){
     if (!els.pct) return;
@@ -136,7 +143,9 @@
     els.pct.textContent = '0%';
   }
 
-  function setPctFade(){ if (els.pct) els.pct.style.opacity = '0'; }
+  function setPctFade(){
+    if (els.pct) els.pct.style.opacity = '0';
+  }
 
   function setPctActive(v){
     if (!els.pct) return;
@@ -178,8 +187,17 @@
   }
 
   function beginProgress(){
-    // Hide result cards during loading
-    setCardsVisible(false);
+    // Show result cards immediately and apply loading state
+    setCardsVisible(true);
+    for (const c of resultCards){
+      if (c) c.classList.add('card--loading');
+    }
+
+    // Clear previous text while keeping layout stable
+    if (els.body) els.body.textContent = '';
+    if (els.post) els.post.textContent = '';
+    if (els.tips) els.tips.textContent = '';
+    if (els.score) els.score.textContent = '—';
 
     pctState = STATE.fadeout;
     setPctFade();
@@ -225,9 +243,6 @@
         els.input.setAttribute('aria-label', ph);
       }
     }
-
-    // Reveal result cards once we hit 100% if the request succeeded
-    if (success) setCardsVisible(true);
 
     // Clear the input once we’ve reached 100%
     if (els.input) els.input.value = '';
@@ -285,6 +300,35 @@
   // ---------------------------------------------------------------------------
   // Rendering
   // ---------------------------------------------------------------------------
+
+  // Typewriter effect for parallel typing
+  const typingTimers = new WeakMap();
+
+  function typewriter(el, text, speed = 18) {
+    if (!el) return;
+    // Cancel any previous typing on this element
+    const prev = typingTimers.get(el);
+    if (prev) clearInterval(prev);
+
+    el.textContent = '';
+    if (!text) {
+      typingTimers.delete(el);
+      return;
+    }
+
+    let i = 0;
+    const id = setInterval(() => {
+      el.textContent += text[i];
+      i++;
+      if (i >= text.length) {
+        clearInterval(id);
+        typingTimers.delete(el);
+      }
+    }, speed);
+
+    typingTimers.set(el, id);
+  }
+
   // Render Tips as a plain UL with plain LIs (no inline margins/classes)
   function renderTips(tips){
     if (!els.tips) return;
@@ -292,66 +336,6 @@
     if (!items.length){ els.tips.textContent = '—'; return; }
     const html = `<ul>${items.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
     els.tips.innerHTML = html;
-  }
-
-  // Typewriter Tips (character-by-character per <li>, no extra wrappers)
-  async function typeTips(items, token){
-    if (!els.tips) return;
-    const list = Array.isArray(items) ? items.filter(Boolean).map(String) : [];
-    if (!list.length){ els.tips.textContent = '—'; return; }
-
-    const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const allow = document.body && document.body.hasAttribute('data-allow-reduced');
-
-    els.tips.innerHTML = '';
-    els.tips.classList.add('typewriter');
-    const ul = document.createElement('ul');
-    els.tips.appendChild(ul);
-
-    for (const t of list){
-      if (token != null && token !== renderSeq) return; // a new render started — abort
-      const li = document.createElement('li');
-      ul.appendChild(li);
-
-      // show caret on the active line
-      li.classList.add('typing');
-
-      if (prefersReduce && !allow){
-        li.textContent = t;
-        li.classList.remove('typing');
-        continue;
-      }
-      for (const ch of t){
-        if (token != null && token !== renderSeq) return;
-        li.textContent += ch;
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise(r => setTimeout(r, DUR.typewriter));
-      }
-      li.classList.remove('typing');
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise(r => setTimeout(r, Math.min(200, DUR.typewriter * 2)));
-    }
-    els.tips.classList.remove('typing');
-  }
-
-  async function typewriterEffect(el, text, token) {
-    if (!el) return;
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const allow = document.body && document.body.hasAttribute('data-allow-reduced');
-    if (reduce && !allow) { el.textContent = text; return; }
-
-    // Ensure caret blink even if DOM has no class
-    el.classList.add('typewriter');
-    el.classList.add('typing');
-    el.textContent = '';
-    const chars = Array.from(text);
-    for (let i = 0; i < chars.length; i++){
-      if (token != null && token !== renderSeq) return; // a new render started — abort
-      el.textContent += chars[i];
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise(r => setTimeout(r, DUR.typewriter));
-    }
-    el.classList.remove('typing');
   }
 
   function renderGauge(score){
@@ -392,42 +376,49 @@
     if (els.score) els.score.textContent = String(pct);
   }
 
-  async function typeBody(text){
-    if (!els.body) return;
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce){ els.body.textContent = text; return; }
-
-    els.body.classList.add('typing');
-    els.body.textContent = '';
-    const chars = Array.from(text);
-    for (let i = 0; i < chars.length; i++){
-      els.body.textContent += chars[i];
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise(r => setTimeout(r, DUR.typewriter));
+  function render(data){
+    setCardsVisible(true);
+    // Clear loading state from cards
+    for (const c of resultCards){
+      if (c) c.classList.remove('card--loading');
     }
-    els.body.classList.remove('typing');
-  }
 
-  async function render(data){
-    const token = ++renderSeq;
+    // Titles: instant
     if (els.titleHdr){
-      await typewriterEffect(els.titleHdr, data.title || '—');
+      els.titleHdr.textContent = data.title || '—';
+      els.titleHdr.classList.remove('typing', 'typewriter');
+    }
+    if (els.jobTitle){
+      els.jobTitle.textContent = lastUserTitle || '—';
+      els.jobTitle.classList.remove('typing', 'typewriter');
     }
 
+    // Gauge
     renderGauge(data.score);
 
-    await typewriterEffect(els.body, data.body || '—');
-
-    if (els.post){
-      await typewriterEffect(els.post, data.post || '—');
+    // Body: typewriter
+    const bodyText = data.body || '—';
+    if (els.body){
+      els.body.classList.remove('typing', 'typewriter');
+      typewriter(els.body, bodyText, 14);
     }
 
+    // Post: typewriter
+    const postText = data.post || '—';
+    if (els.post){
+      els.post.classList.remove('typing', 'typewriter');
+      typewriter(els.post, postText, 14);
+    }
+
+    // Tips: typewriter as bullet block
     if (els.tips){
-      if (data.tips && data.tips.length){
-        await typeTips(data.tips, token);
-      } else {
-        els.tips.textContent = '—';
-      }
+      const tipsArr = Array.isArray(data.tips) ? data.tips.filter(Boolean) : [];
+      const tipsText = tipsArr.length
+        ? '• ' + tipsArr.join('\n• ')
+        : '—';
+      els.tips.style.whiteSpace = 'pre-wrap';
+      els.tips.classList.remove('typing', 'typewriter');
+      typewriter(els.tips, tipsText, 16);
     }
   }
 
@@ -446,7 +437,6 @@
     }
   });
 
-  try { localStorage.removeItem(LS_LAST_TITLE); } catch {}
   if (els.input) els.input.value = '';
 
   // ---------------------------------------------------------------------------
@@ -459,6 +449,8 @@
     const title = (els.input?.value || '').trim();
     // Removed localStorage.setItem(LS_LAST_TITLE, title);
     if (!title) return;
+    lastUserTitle = title;
+    els.jobTitle.textContent = title;
 
     hideErr();
     beginProgress();
@@ -468,7 +460,7 @@
     try {
       const raw = await fetchRoast(title);
       const data = normalize(raw);
-      await render(data);
+      render(data); // don't await; let typewriter run while progress finishes
       success = true;
       setStatus('Done.');
     } catch (err) {
