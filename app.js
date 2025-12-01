@@ -393,34 +393,42 @@
       els.jobTitle.classList.remove('typing', 'typewriter');
     }
 
-    // Gauge
-    renderGauge(data.score);
+    // Slight delay before the rest of the content (score, analysis, post, tips)
+    const CONTENT_DELAY_MS = 800;
 
-    // Body: typewriter
-    const bodyText = data.body || '—';
-    if (els.body){
-      els.body.classList.remove('typing', 'typewriter');
-      typewriter(els.body, bodyText, 14);
-    }
+    setTimeout(() => {
+      // Gauge (out-score)
+      renderGauge(data.score);
 
-    // Post: typewriter
-    const postText = data.post || '—';
-    if (els.post){
-      els.post.classList.remove('typing', 'typewriter');
-      typewriter(els.post, postText, 14);
-    }
+      // Body: typewriter
+      const bodyText = data.body || '—';
+      if (els.body){
+        els.body.classList.remove('typing', 'typewriter');
+        typewriter(els.body, bodyText, 14);
+      }
 
-    // Tips: typewriter as bullet block
-    if (els.tips){
-      const tipsArr = Array.isArray(data.tips) ? data.tips.filter(Boolean) : [];
-      const tipsText = tipsArr.length
-        ? '• ' + tipsArr.join('\n• ')
-        : '—';
-      els.tips.style.whiteSpace = 'pre-wrap';
-      els.tips.classList.remove('typing', 'typewriter');
-      typewriter(els.tips, tipsText, 16);
-    }
+      // Post: typewriter
+      const postText = data.post || '—';
+      if (els.post){
+        els.post.classList.remove('typing', 'typewriter');
+        typewriter(els.post, postText, 14);
+      }
+
+      // Tips: typewriter as bullet block
+      if (els.tips){
+        const tipsArr = Array.isArray(data.tips) ? data.tips.filter(Boolean) : [];
+        const tipsText = tipsArr.length
+          ? '• ' + tipsArr.join('\n• ')
+          : '—';
+        els.tips.style.whiteSpace = 'pre-wrap';
+        els.tips.classList.remove('typing', 'typewriter');
+        typewriter(els.tips, tipsText, 16);
+      }
+    }, CONTENT_DELAY_MS);
   }
+
+
+
 
   // ---------------------------------------------------------------------------
   // UX niceties & hydration
