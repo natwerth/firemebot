@@ -531,3 +531,18 @@ background-image:
   0%   { transform: translateX(-120%); }
   100% { transform: translateX(120%); }
 }
+/* Appeals keep the original assessment visible and end with a final ruling. */
+.appeal-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:16px; }
+.appeal-card { display:flex; }
+.appeal-heading { font-size:20px; font-weight:700; }
+#appeal-defense { resize:vertical; min-height:120px; font-family:inherit; line-height:1.5; overflow:auto; }
+#appeal-help, #appeal-count, .appeal-final, .appeal-eyebrow { color:#82bdb2; }
+.appeal-eyebrow { text-transform:uppercase; letter-spacing:.08em; font-size:12px; }
+.appeal-score { font-size:24px; font-weight:700; }
+#appeal-ruling, #appeal-post { overflow-wrap:anywhere; }
+.btn:disabled { opacity:.55; cursor:wait; }
+#appeal-verdict:focus { outline:2px solid var(--accent); outline-offset:4px; }
+@media (max-width:520px) {
+  .appeal-card { padding:16px; }
+  .appeal-heading { font-size:18px; }
+}

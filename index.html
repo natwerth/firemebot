@@ -24,7 +24,7 @@
     <form id="job-form" class="top-input__form" autocomplete="off">
       <label for="job-input" class="sr-only">Job title</label>
       <div class="top-input__field" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-        <input class="input" id="job-input" name="title" type="text" placeholder="Enter your job title..." autofocus aria-describedby="progress-pct">
+        <input class="input" id="job-input" name="title" type="text" maxlength="140" required placeholder="Enter your job title..." autofocus aria-describedby="progress-pct">
         <span id="progress-pct">0%</span>
       </div>
       <button id="submit-btn" type="submit" class="btn btn--primary top-input__button">Analyze</button>
@@ -129,11 +129,35 @@
         </div>
       </section>
 
-      <section aria-label="try-again-card">
-        <button type="button" class="btn btn--ghost try-again-btn" onclick="window.location.reload()" style="display:flex; align-items:center; color: var(--ink-muted);">
-          <i class="fa-solid fa-rotate-right" aria-hidden="true" style="font-size:3rem;"></i>
-          <span style="font-size:1.25rem;"></span>
-        </button>
+      <section id="appeal-section" aria-label="Appeal your assessment" hidden>
+        <div class="appeal-actions">
+          <button id="appeal-open" class="btn btn--primary" type="button" aria-expanded="false" aria-controls="appeal-form">Appeal this decision</button>
+          <button id="try-another" class="btn btn--ghost" type="button">Try another job</button>
+        </div>
+        <form id="appeal-form" class="card appeal-card stack-3" hidden>
+          <label for="appeal-defense" class="appeal-heading">Make your case. Why should you not be fired?</label>
+          <p id="appeal-help">Your statement will be used against you.</p>
+          <textarea id="appeal-defense" class="input" rows="4" maxlength="300" required aria-describedby="appeal-help appeal-count" placeholder="I'm the only person who understands the spreadsheet we built in 2009."></textarea>
+          <div class="appeal-actions">
+            <span id="appeal-count">0 / 300 characters</span>
+            <button id="appeal-submit" class="btn btn--primary" type="submit">Submit appeal</button>
+          </div>
+          <p id="appeal-status" role="status" aria-live="polite"></p>
+        </form>
+        <section id="appeal-result" class="card appeal-card stack-3" aria-labelledby="appeal-verdict" hidden>
+          <p class="appeal-eyebrow">Final ruling</p>
+          <h2 id="appeal-verdict" tabindex="-1"></h2>
+          <p id="appeal-score" class="appeal-score"></p>
+          <p id="appeal-ruling"></p>
+          <div class="rule" aria-hidden="true"></div>
+          <p id="appeal-post"></p>
+          <div class="appeal-actions">
+            <button id="appeal-copy" class="btn btn--ghost" type="button">Copy ruling</button>
+            <button id="appeal-share" class="btn btn--ghost" type="button">Share ruling</button>
+            <span id="appeal-copy-status" role="status"></span>
+          </div>
+          <p class="appeal-final">This decision is final. Further correspondence will be ignored.</p>
+        </section>
       </section>
 
       <!-- Error -->

@@ -6,9 +6,8 @@
   // ---------------------------------------------------------------------------
   // Config & constants (no behavior change)
   // ---------------------------------------------------------------------------
-  const WORKER_URL = (location.hostname === 'localhost:' || location.hostname === '8787')
-    ? '/api/roast'
-    : 'https://firemebot-api.nat-1fa.workers.dev/api/roast';
+  // The deployed Worker allows localhost for browser previews too.
+  const API_BASE = 'https://firemebot-api.nat-1fa.workers.dev';
 
   const DUR = Object.freeze({
     labelEnter: 220,       // ms: % label one-shot entrance
@@ -52,6 +51,15 @@
   };
 
   let lastUserTitle = '';
+  let assessment = null;
+  let busy = false;
+  let appealComplete = false;
+  let appealPost = '';
+  const appeal = Object.fromEntries([
+    'section', 'open', 'form', 'defense', 'count', 'submit', 'status',
+    'result', 'verdict', 'score', 'ruling', 'post', 'copy', 'share', 'copy-status'
+  ].map(name => [name, document.getElementById(`appeal-${name}`)]));
+  const tryAnother = document.getElementById('try-another');
 
   // ---------------------------------------------------------------------------
   // Result card visibility helpers
@@ -68,7 +76,6 @@
     
   })();
 
-  const tryAgainSection = document.querySelector('section[aria-label="try-again-card"]');
 
   function setCardsVisible(isVisible){
     for (const c of resultCards){
@@ -80,10 +87,6 @@
         c.style.display = 'none';
         c.setAttribute('aria-hidden', 'true');
       }
-    }
-    // Add THIS right after the for-loop:
-    if (tryAgainSection) {
-      tryAgainSection.style.display = isVisible ? 'block' : 'none';
     }
   }
 
@@ -103,11 +106,12 @@
   function showErr(msg, details = ''){
     if (!els.errCard || !els.errMsg) return;
     els.errMsg.textContent = [msg, details].filter(Boolean).join('\n');
+    els.errCard.hidden = false;
     els.errCard.style.display = 'block';
   }
 
   function hideErr(){
-    if (els.errCard) els.errCard.style.display = 'none';
+    if (els.errCard) { els.errCard.hidden = true; els.errCard.style.display = 'none'; }
     if (els.errMsg) els.errMsg.textContent = '';
   }
 
@@ -229,7 +233,14 @@
   function endProgress(success){
     if (els.inputWrapper) els.inputWrapper.removeAttribute('data-darktext');
     clearInterval(progressTimer);
-    setProgress(100);
+    setProgress(success ? 100 : 0);
+    if (!success) {
+      pctState = STATE.idle;
+      setPctIdle();
+      setCardsVisible(false);
+      els.titleHdr.textContent = '—';
+      return;
+    }
     // Hide placeholder during 100% dwell so the bar fully covers it
     if (els.inputWrapper) els.inputWrapper.setAttribute('data-dwell', 'true');
 
@@ -269,20 +280,35 @@
   // ---------------------------------------------------------------------------
   // Networking & data shaping
   // ---------------------------------------------------------------------------
-  async function fetchRoast(title){
-    const res = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title })
-    });
-    const text = await res.text();
+  async function requestJSON(path, payload){
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 90000);
     try {
-      return JSON.parse(text);
-    } catch {
-      const m = text.match(/\{[\s\S]*\}/);
-      if (m) { try { return JSON.parse(m[0]); } catch { /* fall through */ } }
-      throw new Error('Unexpected response from worker');
+      const res = await fetch(`${API_BASE}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || data?.error) {
+        throw new Error(data?.message || (res.status === 429
+          ? 'Too many submissions. Please wait a minute and try again.'
+          : 'The assessment office is temporarily unavailable. Please try again.'));
+      }
+      if (!data || typeof data !== 'object') throw new Error('The assessment office returned an unreadable response. Please try again.');
+      return data;
+    } catch (err) {
+      if (err.name === 'AbortError') throw new Error('The assessment office took too long. Please try again.');
+      if (err instanceof TypeError) throw new Error('Could not reach the assessment office. Check your connection and try again.');
+      throw err;
+    } finally {
+      clearTimeout(timer);
     }
+  }
+
+  function validScore(score) {
+    return Number.isInteger(score) && score >= 0 && score <= 100;
   }
 
   function normalize(payload){
@@ -452,6 +478,7 @@
   // ---------------------------------------------------------------------------
   async function onSubmit(e){
     e.preventDefault();
+    if (busy || assessment) return;
     els.input?.blur();
     let success = false;
     const title = (els.input?.value || '').trim();
@@ -464,24 +491,112 @@
     beginProgress();
     setStatus('Working…');
     els.btn.disabled = true;
+    els.input.disabled = true;
+    busy = true;
 
     try {
-      const raw = await fetchRoast(title);
+      const raw = await requestJSON('/api/roast', { title });
       const data = normalize(raw);
+      if (!validScore(data.score) || !data.body.trim()) throw new Error('The assessment was incomplete. Please try again.');
+      assessment = { score: data.score, body: data.body };
+      appeal.section.hidden = false;
       render(data); // don't await; let typewriter run while progress finishes
       success = true;
       setStatus('Done.');
     } catch (err) {
       console.error(err);
-      showErr(err.message, (err && err.stack) ? String(err.stack) : '');
+      showErr(err.message);
       setStatus('Error.');
     } finally {
-      els.btn.disabled = false;
+      busy = false;
+      els.btn.disabled = success;
+      els.input.disabled = success;
       endProgress(success);
     }
   }
 
   if (els.form) els.form.addEventListener('submit', onSubmit);
+
+  appeal.open.addEventListener('click', () => {
+    if (!assessment || busy || appealComplete) return;
+    appeal.form.hidden = false;
+    appeal.open.setAttribute('aria-expanded', 'true');
+    appeal.open.hidden = true;
+    appeal.defense.focus();
+  });
+  tryAnother.addEventListener('click', () => {
+    if (!busy) window.location.reload();
+  });
+  appeal.defense.addEventListener('input', () => {
+    appeal.count.textContent = `${appeal.defense.value.length} / 300 characters`;
+    appeal.defense.setCustomValidity('');
+  });
+  appeal.form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (busy || !assessment || appealComplete) return;
+    const defense = appeal.defense.value.trim();
+    if (!defense || appeal.defense.value.length > 300) {
+      appeal.defense.setCustomValidity('Make your case in 1–300 characters.');
+      appeal.defense.reportValidity();
+      return;
+    }
+    hideErr();
+    busy = true;
+    appeal.submit.disabled = true;
+    appeal.defense.disabled = true;
+    tryAnother.disabled = true;
+    appeal.form.setAttribute('aria-busy', 'true');
+    appeal.status.textContent = 'Reviewing your continued relevance…';
+    setStatus('Appeal under review…');
+    try {
+      const { appeal: result } = await requestJSON('/api/appeal', {
+        title: lastUserTitle, original: assessment, defense
+      });
+      if (!result || !validScore(result.score) ||
+          !['Appeal denied', 'Sentence reduced', 'Position retained. For now.'].includes(result.verdict) ||
+          typeof result.ruling !== 'string' || !result.ruling.trim() ||
+          typeof result.post !== 'string' || !result.post.trim()) {
+        throw new Error('The ruling was incomplete. Please submit your appeal again.');
+      }
+      appeal.verdict.textContent = result.verdict;
+      appeal.score.textContent = `Risk score: ${assessment.score} → ${result.score}`;
+      appeal.ruling.textContent = result.ruling;
+      appeal.post.textContent = result.post;
+      appealPost = result.post;
+      appealComplete = true;
+      appeal.form.hidden = true;
+      appeal.result.hidden = false;
+      appeal.verdict.focus();
+      setStatus('Decision final.');
+    } catch (err) {
+      showErr(err.message);
+      appeal.status.textContent = 'Your defense is saved here. Please try again.';
+      setStatus('Appeal not submitted.');
+    } finally {
+      busy = false;
+      appeal.form.removeAttribute('aria-busy');
+      appeal.submit.disabled = false;
+      appeal.defense.disabled = false;
+      tryAnother.disabled = false;
+    }
+  });
+  async function copyAppeal() {
+    try {
+      await navigator.clipboard.writeText(`${appealPost} https://firemebot.com`);
+      appeal['copy-status'].textContent = 'Ruling copied.';
+    } catch {
+      appeal['copy-status'].textContent = 'Copy unavailable. Select the ruling text to copy it.';
+    }
+  }
+  appeal.copy.addEventListener('click', copyAppeal);
+  appeal.share.addEventListener('click', async () => {
+    try {
+      if (!navigator.share) { await copyAppeal(); return; }
+      await navigator.share({ title: 'My FireMeBot appeal', text: appealPost, url: 'https://firemebot.com' });
+    } catch (err) {
+      if (err.name !== 'AbortError') await copyAppeal();
+    }
+  });
 
   // Copy post
   if (els.copyBtn){
